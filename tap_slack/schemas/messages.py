@@ -3,12 +3,6 @@ from singer_sdk import typing as th
 schema = th.PropertiesList(
     th.Property("channel_id", th.StringType, required=True),
     th.Property(
-        "ts",
-        th.StringType,
-        required=True,
-        description="Epoch timestamp of when the thread reply was posted.",
-    ),
-    th.Property(
         "blocks",
         th.ArrayType(
             th.ObjectType(
@@ -30,6 +24,13 @@ schema = th.PropertiesList(
     ),
     th.Property("client_msg_id", th.StringType),
     th.Property("display_as_bot", th.BooleanType),
+    th.Property(
+        "edited",
+        th.ObjectType(
+            th.Property("ts", th.StringType, required=True),
+            th.Property("user", th.StringType, required=True),
+        ),
+    ),
     th.Property("file_id", th.StringType),
     th.Property("file_ids", th.ArrayType(th.StringType)),
     th.Property(
@@ -71,6 +72,12 @@ schema = th.PropertiesList(
     th.Property("text", th.StringType),
     th.Property("thread_ts", th.StringType),
     th.Property("topic", th.StringType),
+    th.Property(
+        "ts",
+        th.StringType,
+        required=True,
+        description="Epoch timestamp of when the thread reply was posted.",
+    ),
     th.Property("type", th.StringType),
     th.Property("unread_count", th.IntegerType),
     th.Property("upload", th.BooleanType),

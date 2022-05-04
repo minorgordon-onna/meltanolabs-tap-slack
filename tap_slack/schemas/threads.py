@@ -9,9 +9,21 @@ schema = th.PropertiesList(
             )
         ),
     ),
+    th.Property("bot_id", th.StringType),
+    th.Property(
+        "bot_profile",
+        th.ObjectType(
+            th.Property("app_id", th.StringType),
+            th.Property("deleted", th.BooleanType),
+            th.Property("id", th.StringType),
+            th.Property("name", th.StringType),
+            th.Property("team_id", th.StringType),
+            th.Property("updated", th.IntegerType),
+        ),
+    ),
     th.Property("channel_id", th.StringType, required=True),
     th.Property("client_msg_id", th.StringType),
-    # th.Property("display_as_bot", th.StringType),
+    th.Property("display_as_bot", th.BooleanType),
     th.Property(
         "edited",
         th.ObjectType(
@@ -22,6 +34,7 @@ schema = th.PropertiesList(
     # th.Property("files", th.StringType),
     th.Property("is_locked", th.BooleanType),
     th.Property("latest_reply", th.StringType),
+    th.Property("parent_user_id", th.StringType),
     th.Property(
         "reactions",
         th.ArrayType(
