@@ -26,13 +26,12 @@ schema = th.PropertiesList(
             th.Property("user", th.StringType, required=True),
         ),
     ),
-    th.Property("files", th.StringType),
+    # th.Property("files", th.StringType),
     th.Property("upload", th.StringType),
     th.Property("parent_user_id", th.StringType),
     th.Property("display_as_bot", th.StringType),
     th.Property("upload", th.StringType),
     th.Property("is_locked", th.BooleanType),
-    th.Property("files", th.StringType),
     th.Property(
         "blocks",
         th.ArrayType(
