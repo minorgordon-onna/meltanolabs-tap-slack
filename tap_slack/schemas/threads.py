@@ -20,8 +20,18 @@ schema = th.PropertiesList(
         ),
     ),
     # th.Property("files", th.StringType),
-    # th.Property("is_locked", th.BooleanType),
+    th.Property("is_locked", th.BooleanType),
     th.Property("latest_reply", th.StringType),
+    th.Property(
+        "reactions",
+        th.ArrayType(
+            th.ObjectType(
+                th.Property("count", th.IntegerType),
+                th.Property("name", th.StringType),
+                th.Property("users", th.ArrayType(th.StringType)),
+            )
+        ),
+    ),
     th.Property("reply_count", th.IntegerType),
     th.Property("reply_users", th.ArrayType(th.StringType)),
     th.Property("reply_users_count", th.NumberType),
@@ -41,6 +51,6 @@ schema = th.PropertiesList(
         description="Epoch timestamp of when the thread reply was posted.",
     ),
     th.Property("type", th.StringType),
-    # th.Property("upload", th.BooleanType),
+    th.Property("upload", th.BooleanType),
     th.Property("user", th.StringType),
 ).to_dict()
