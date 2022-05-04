@@ -19,7 +19,13 @@ schema = th.PropertiesList(
     th.Property("text", th.StringType),
     th.Property("user", th.StringType),
     th.Property("team", th.StringType),
-    th.Property("edited", th.StringType),
+    th.Property(
+        "edited",
+        th.ObjectType(
+            th.Property("ts", th.StringType, required=True),
+            th.Property("user", th.StringType, required=True),
+        ),
+    ),
     th.Property("files", th.StringType),
     th.Property("upload", th.StringType),
     th.Property("parent_user_id", th.StringType),
