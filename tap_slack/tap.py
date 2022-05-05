@@ -40,12 +40,12 @@ class TapSlack(Tap):
             th.DateTimeType,
             description="The earliest record date to sync",
         ),
-        th.Property(
-            "thread_lookback_days",
-            th.IntegerType,
-            default=1,
-            description="The number of days to look in the past for new thread replies to existing messages",
-        ),
+        # th.Property(
+        #     "thread_lookback_days",
+        #     th.IntegerType,
+        #     default=1,
+        #     description="The number of days to look in the past for new thread replies to existing messages",
+        # ),
         th.Property(
             "channel_types",
             th.ArrayType(th.StringType),
@@ -81,6 +81,7 @@ class TapSlack(Tap):
             "tap__discovery",
             "tap__stream_connections",
         ]
+
 
 if __name__ == "__main__":
     TapSlack.cli()

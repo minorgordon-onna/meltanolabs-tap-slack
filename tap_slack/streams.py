@@ -43,9 +43,9 @@ class ChannelsStream(SlackStream):
         selected_channels = self.config.get("selected_channels")
         excluded_channels = self.config.get("excluded_channels", [])
         if channel_id in excluded_channels:
-                return False
+            return False
         if selected_channels and channel_id not in selected_channels:
-                return False
+            return False
         return True
 
     def _join_channel(self, channel_id: str) -> requests.Response:
@@ -94,11 +94,11 @@ class MessagesStream(SlackStream):
     ignore_parent_replication_key = True
     max_requests_per_minute = 50
 
-    @property
-    def threads_stream_start(self):
-        lookback_days = timedelta(days=self.config["thread_lookback_days"])
-        start_date = datetime.now(tz=timezone.utc) - lookback_days
-        return start_date.timestamp()
+    # @property
+    # def threads_stream_start(self):
+    #     lookback_days = timedelta(days=self.config["thread_lookback_days"])
+    #     start_date = datetime.now(tz=timezone.utc) - lookback_days
+    #     return start_date.timestamp()
 
     def get_url_params(self, context, next_page_token):
         """Augment default to implement incremental syncing."""
@@ -137,8 +137,8 @@ class MessagesStream(SlackStream):
         state = self.get_context_state(context)
         replication_key_value = state.get("replication_key_value")
         if replication_key_value:
-            if self.threads_stream_start < self.threads_stream_start:
-                return self.threads_stream_start
+            # if self.threads_stream_start < self.threads_stream_start:
+            #     return self.threads_stream_start
             return replication_key_value
         elif "start_date" in self.config:
             start_date = cast(datetime, pendulum.parse(self.config["start_date"]))
