@@ -119,7 +119,7 @@ class MessagesStream(SlackStream):
             threads_context = {**context, **{"thread_ts": row["ts"]}}
             threads_stream.sync(context=threads_context)
             time.sleep(60.0 / threads_stream.max_requests_per_minute)
-        if row["ts"] and float(row["ts"]) < replication_key_ts:
+        if row["ts"] and float(row["ts"]) < float(replication_key_ts):
             return None
         return row
 
