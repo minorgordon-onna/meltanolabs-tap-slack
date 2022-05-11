@@ -74,7 +74,7 @@ class ChannelMembersStream(SlackStream):
 
     def parse_response(self, response):
         user_list = extract_jsonpath(self.records_jsonpath, input=response.json())
-        yield from ({"member_id": ii} for ii in user_list)
+        yield from ({"user_id": ii} for ii in user_list)
 
     def post_process(self, row, context=None):
         row = super().post_process(row, context=context)
