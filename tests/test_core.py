@@ -37,6 +37,7 @@ def test_auto_join_channel_false(patch_obj, test_util):
     test_utility.run_sync()
     patch_obj.assert_not_called()
 
+
 @patch("tap_slack.streams.ChannelsStream._join_channel")
 def test_auto_join_channel(patch_obj, test_util):
     config = SAMPLE_CONFIG.copy()
