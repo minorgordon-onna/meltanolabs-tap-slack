@@ -15,11 +15,11 @@ from tap_slack.streams import (
 )
 
 STREAM_TYPES = [
-    UsersStream,
     ChannelsStream,
     ChannelMembersStream,
     MessagesStream,
     ThreadsStream,
+    UsersStream,
 ]
 
 
