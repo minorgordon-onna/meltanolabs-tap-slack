@@ -1,6 +1,6 @@
 """Slack tap class."""
 
-from typing import List
+from typing import List, Optional
 
 from singer_sdk import Tap, Stream
 from singer_sdk import typing as th
@@ -73,6 +73,20 @@ class TapSlack(Tap):
     def discover_streams(self) -> List[Stream]:
         """Return a list of discovered streams."""
         return [stream_class(tap=self) for stream_class in STREAM_TYPES]
+
+    def load_streams(self) -> List[Stream]:
+        # Hack: the parent class sorts streams by type and name
+        # We want users to always be first.
+        sorted_streams = Tap.load_streams(self)
+        other_streams: List[Stream] = []
+        users_stream: Optional[UsersStream] = None
+        for stream in sorted_streams:
+            if isinstance(stream, UsersStream):
+                users_stream = stream
+            else:
+                other_streams.append(stream)
+        assert users_stream is not None
+        return [users_stream] + other_streams
 
     @property
     def expectations(self):
