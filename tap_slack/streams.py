@@ -1,10 +1,15 @@
 """Stream type classes for tap-slack."""
+import copy
+
 import requests
 import pendulum
 import time
 
 from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, Optional, Iterable, cast
+from typing import Any, Dict, Optional, Iterable, cast, List
+
+from singer_sdk.exceptions import InvalidStreamSortException
+from singer_sdk.helpers._state import log_sort_error, finalize_state_progress_markers
 from singer_sdk.helpers.jsonpath import extract_jsonpath
 
 from tap_slack.client import SlackStream
@@ -29,16 +34,6 @@ class ChannelsStream(SlackStream):
         params["types"] = ",".join(self.config["channel_types"])
         return params
 
-    def post_process(self, row, context):
-        "Join the channel if not a member, but emit no data."
-        row = super().post_process(row, context)
-        # return all in selected_channels or default to all, exclude any in excluded_channels list
-        channel_id = row["id"]
-        if self._is_channel_included(channel_id):
-            if not row["is_member"] and self.config.get("auto_join_channels", False):
-                self._join_channel(channel_id)
-            return row
-
     def _is_channel_included(self, channel_id: str) -> bool:
         selected_channels = self.config.get("selected_channels")
         excluded_channels = self.config.get("excluded_channels", [])
@@ -59,6 +54,94 @@ class ChannelsStream(SlackStream):
                 "Error joining channel %s: %s", response.json().get("error")
             )
         self.logger.info("Successfully joined channel: %s", channel_id)
+
+    def post_process(self, row, context):
+        "Join the channel if not a member, but emit no data."
+        row = super().post_process(row, context)
+        # return all in selected_channels or default to all, exclude any in excluded_channels list
+        channel_id = row["id"]
+        if self._is_channel_included(channel_id):
+            if not row["is_member"] and self.config.get("auto_join_channels", False):
+                self._join_channel(channel_id)
+            return row
+
+    def _sync_records(  # noqa C901  # too complex
+        self, context: Optional[dict] = None
+    ) -> None:
+        """
+        Override to write a parent record before its child record.
+        """
+
+        record_count = 0
+        current_context: Optional[dict]
+        context_list: Optional[List[dict]]
+        context_list = [context] if context is not None else self.partitions
+        selected = self.selected
+
+        for current_context in context_list or [{}]:
+            partition_record_count = 0
+            current_context = current_context or None
+            state = self.get_context_state(current_context)
+            state_partition_context = self._get_state_partition_context(current_context)
+            self._write_starting_replication_value(current_context)
+            child_context: Optional[dict] = (
+                None if current_context is None else copy.copy(current_context)
+            )
+            for record_result in self.get_records(current_context):
+                if isinstance(record_result, tuple):
+                    # Tuple items should be the record and the child context
+                    record, child_context = record_result
+                else:
+                    record = record_result
+                child_context = copy.copy(
+                    self.get_child_context(record=record, context=child_context)
+                )
+                for key, val in (state_partition_context or {}).items():
+                    # Add state context to records if not already present
+                    if key not in record:
+                        record[key] = val
+
+                # MG: Sync children was here, writing child records first
+                # MG: We want to write the parent record first.
+                self._check_max_record_limit(record_count)
+                if selected:
+                    if (record_count - 1) % self.STATE_MSG_FREQUENCY == 0:
+                        self._write_state_message()
+                    self._write_record_message(record)
+                    try:
+                        self._increment_stream_state(record, context=current_context)
+                    except InvalidStreamSortException as ex:
+                        log_sort_error(
+                            log_fn=self.logger.error,
+                            ex=ex,
+                            record_count=record_count + 1,
+                            partition_record_count=partition_record_count + 1,
+                            current_context=current_context,
+                            state_partition_context=state_partition_context,
+                            stream_name=self.name,
+                        )
+                        raise ex
+
+                record_count += 1
+                partition_record_count += 1
+
+                # MG: Sync children is now here
+                # MG: Write the parent record first, then the child records.
+
+                # Sync children, except when primary mapper filters out the record
+                if self.stream_maps[0].get_filter_result(record):
+                    self._sync_children(child_context)
+
+            if current_context == state_partition_context:
+                # Finalize per-partition state only if 1:1 with context
+                finalize_state_progress_markers(state)
+        if not context:
+            # Finalize total stream only if we have the full full context.
+            # Otherwise will be finalized by tap at end of sync.
+            finalize_state_progress_markers(self.stream_state)
+        self._write_record_count_log(record_count=record_count, context=context)
+        # Reset interim bookmarks before emitting final STATE message:
+        self._write_state_message()
 
 
 class ChannelMembersStream(SlackStream):
